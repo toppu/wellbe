@@ -3,11 +3,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 import { RootStackParamList, MainTabParamList } from '../types';
 import { theme } from '../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
 
-// Screen imports (we'll create these next)
+// Screen imports
 import AuthNavigator from './AuthNavigator';
 import OnboardingNavigator from './OnboardingNavigator';
 import HomeScreen from '../screens/HomeScreen';
@@ -18,6 +20,14 @@ import ProfileNavigator from './ProfileNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
+
+function LoadingScreen() {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={theme.colors.primary} />
+    </View>
+  );
+}
 
 function MainTabNavigator() {
   return (
@@ -87,9 +97,11 @@ function MainTabNavigator() {
 }
 
 export default function AppNavigator() {
-  // TODO: Add authentication state management
-  const isAuthenticated = false;
-  const isOnboardingComplete = false;
+  const { isAuthenticated, isOnboardingComplete, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <NavigationContainer>
@@ -105,3 +117,12 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+  },
+});

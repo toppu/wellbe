@@ -12,14 +12,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { theme } from '../../constants/theme';
+import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
+import authService from '../../services/AuthService';
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 };
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -50,11 +53,35 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      // TODO: Implement actual authentication
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
-      Alert.alert('Success', 'Login successful!');
-    } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      const result = await login(email, password);
+      
+      if (result.success) {
+        // Navigation will happen automatically via AuthContext
+        console.log('✅ Login successful!');
+      } else {
+        Alert.alert('Login Failed', result.error || 'Please check your credentials and try again.');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickLogin = async () => {
+    setLoading(true);
+    try {
+      // Quick login with default user for development
+      const result = await authService.loginAsDefaultUser();
+      if (result.success) {
+        console.log('✅ Quick login successful!');
+        // Refresh auth context
+        window.location?.reload?.(); // For web
+      } else {
+        Alert.alert('Quick Login Failed', result.error || 'Unable to login with default user');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', 'Quick login failed. Please use manual login.');
     } finally {
       setLoading(false);
     }
@@ -82,6 +109,22 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             </View>
             <Text style={styles.appName}>wellbe</Text>
           </View>
+
+          {/* Development Quick Login */}
+          {__DEV__ && (
+            <View style={styles.devSection}>
+              <Text style={styles.devTitle}>Development Mode</Text>
+              <Button
+                title="Quick Login (Demo User)"
+                onPress={handleQuickLogin}
+                variant="secondary"
+                size="small"
+                loading={loading}
+                style={styles.devButton}
+              />
+              <Text style={styles.devNote}>Email: john@example.com</Text>
+            </View>
+          )}
 
           {/* Login Form */}
           <View style={styles.form}>
@@ -219,6 +262,28 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.primary,
+  },
+  devSection: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    borderRadius: 8,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.warning,
+  },
+  devTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.warning,
+    marginBottom: theme.spacing.sm,
+  },
+  devButton: {
+    marginBottom: theme.spacing.sm,
+  },
+  devNote: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
   },
   form: {
     marginBottom: theme.spacing.lg,
