@@ -88,8 +88,8 @@ function MainTabNavigator() {
 
 export default function AppNavigator() {
   // TODO: Add authentication state management
-  const isAuthenticated = false;
-  const isOnboardingComplete = false;
+  const isAuthenticated = true; // Replace with actual auth state
+  const isOnboardingComplete = true; // Replace with actual onboarding state
 
   return (
     <NavigationContainer>
